@@ -1,4 +1,4 @@
-# Arquitectura web
+ # Arquitectura web
 Arquitectura Web UP 2019
 
 ## Grupo 01 - Integrantes
@@ -302,7 +302,7 @@ Elimina una opción de un desafió.
 
 #### Request
 {
-    'response_id':  1,
+    'response_id': 1
 }
 
 #### Response
