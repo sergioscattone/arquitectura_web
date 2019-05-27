@@ -1,21 +1,16 @@
 const express    = require('express');
 const bodyparser = require('body-parser');
-// look for have only one router file
-const user      = require('./routes/user');
-const points    = require('./routes/points');
-const challenge = require('./routes/challenge');
-const response  = require('./routes/response');
+const routes     = require('./routes/index');
+const middleware = require('./middleware');
 
 const app = express();
-
 app.use(bodyparser.json());
+middleware.applyJwt(app); // this run before set the routes????
 
-//models.sync();
-
-app.use('/user', user);
-app.use('/points', points);
-app.use('/challenge', challenge);
-app.use('/response', response);
+app.use('/setup', routes.setup);
+app.use('/login', routes.login);
+app.use('/user', routes.user);
+app.use('/challenge', routes.challenge);
 
 var port = 5000;
 app.listen(port, function() { console.log("Server online"); });
