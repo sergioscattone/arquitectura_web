@@ -43,7 +43,7 @@ router.post('/', (req, res) => {
 
         models.userModel
             .findOne({ 'username': newUserModel.username }, function (err, user) {
-                if (err) return handleError(err);
+                if (err) return console.log(err);
                 if (user) {
                     res.status(405).send("User already registered with id "+user._id);
                 } else {
@@ -75,6 +75,56 @@ router.post('/choose', (req, res) => {
                     } else {
                         res.send("WRONG, BETTER LUCK NEXT TIME!");
                     }
+                }
+            });
+    }
+});
+
+router.delete('/:id', (req, res) => {
+    if (!req.user || req.user.role != "admin") {
+        res.status(401).send("You are unauthorized for this action.");
+    } else {
+        if (!req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+            res.status(400).send('ID has wrong format');
+        } else {
+            models.userModel
+                .findById(req.params.id)
+                .then(user => {
+                    if (user.role == 'admin') {
+                        res.status(400).send('Admin user can not be deleted');
+                    } else if (!user) {
+                        res.send('User with ID ' + req.params.id + ' does not exist');
+                    } else {
+                        models.userModel.remove({ _id: req.params.id }, ()=>{
+                            res.send('User with ID ' + user._id + ' deleted');
+                        });
+                    }
+                });
+        }
+    }
+});
+
+router.patch('/:id', (req, res) => {
+    if (!req.user || req.user.role != "admin") {
+        res.status(401).send("You are unauthorized for this action.");
+    } else {
+        models.userModel
+            .findById(req.params.id)
+            .then(user => {
+                if (!user)
+                    res.status(404).send('No match');
+                else {
+                    models.userModel
+                        .findOneAndUpdate({"_id": user._id}, 
+                            {$set:{
+                                first_name: req.body.first_name || user.first_name,
+                                last_name: req.body.last_name || user.last_name,
+                                username: req.body.username || user.username,
+                                password:  bcrypt.hashSync(req.body.password || user.password, config.hashSalt),
+                            }})
+                            .then((user) => {
+                                res.send("User with ID "+ user._id + " updated.");    
+                            });
                 }
             });
     }

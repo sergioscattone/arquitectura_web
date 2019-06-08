@@ -5,25 +5,25 @@ const router  = express.Router();
 router.get('/', (req, res) => {
     models.challengeModel
         .find()
-        .then(doc => {
-            res.json(doc);
+        .then(challenges => {
+            res.json(challenges);
         });
 });
 
 router.get('/:id', (req, res) => {
     models.challengeModel
         .findById(req.params.id)
-        .then(doc => {
-            if (doc == null)
+        .then(challenge => {
+            if (challenge == null)
                 res.status(404).send('No match');
             else
-                res.json(doc);
+                res.json(challenge);
         });
 });
 
 router.post('/', (req, res) => {
     if (!req.user || req.user.role != "admin") {
-        res.status(401).send("You are unauthsorized for this action.");
+        res.status(401).send("You are unauthorized for this action.");
     } else {
         var responses = [];
         req.body.responses.forEach(element => {
@@ -53,6 +53,66 @@ router.post('/', (req, res) => {
                     });
                 }
         });
+    }
+});
+
+router.delete('/:id', (req, res) => {
+    if (!req.user || req.user.role != "admin") {
+        res.status(401).send("You are unauthorized for this action.");
+    } else {
+        if (!req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+            res.status(400).send('ID has wrong format');
+        } else {
+            models.challengeModel
+                .findById(req.params.id)
+                .then(challenge => {
+                    if (!challenge) {
+                        res.send('Challenge with ID ' + req.params.id + ' does not exist');
+                    } else {
+                        models.challengeModel.remove({ _id: req.params.id }, ()=>{
+                            res.send('Challenge ' + challenge._id + ' deleted');
+                        });
+                    }
+                });
+        }
+    }
+});
+
+router.put('/:id', (req, res) => {
+    if (!req.user || req.user.role != "admin") {
+        res.status(401).send("You are unauthorized for this action.");
+    } else {
+        models.challengeModel
+            .findById(req.params.id)
+            .then(challenge => {
+                if (challenge == null)
+                    res.status(404).send('No match');
+                else{
+                    var responses = [];
+                    
+                    challenge.responses.forEach(response => {
+                        responses.push(response);
+                    });
+
+                    if (!req.body.responses) {
+                        res.status(400).send('You must send at least one response.');
+                    } else {
+                        req.body.responses.forEach(response => {
+                            var newResponseModel = new models.responseModel({
+                                description: response.description,
+                                correct: response.correct
+                            });
+                            responses.push(newResponseModel);
+                        });
+                        models.challengeModel
+                            .findOneAndUpdate({"_id": challenge._id}, 
+                                {$set:{ responses: responses }})
+                                .then((challenge) => {
+                                    res.send("Challenge with ID "+ challenge._id + " has changed its response.");
+                                });
+                    }
+                }
+            });
     }
 });
 
