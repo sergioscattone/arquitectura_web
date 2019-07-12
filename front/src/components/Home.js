@@ -4,11 +4,18 @@ import React, { Component } from 'react';
 import store from './../js/store/index';
 import updateChallengesFromApi from './../js/actions/challenges';
 import updateUsersFromApi from './../js/actions/users';
+import addUserApi from '../js/actions/addUsers';
+
+const mapDispatchToProps = dispatch => {
+    return { 
+        addUser: user => dispatch(addUserApi(user))
+    }
+}
 
 const mapStateToProps = state => {
     return { 
         users: state.users,
-        challenges: state.challenges
+        challenges: state.challenges,
     };
 }
 
@@ -20,7 +27,26 @@ class HomeComponent extends Component {
             store.dispatch(updateUsersFromApi())
         }, 1000);
         this.logout = this.logout.bind(this);
+
+        // addUser
+        this.password = React.createRef();
+        this.username = React.createRef();
+        this.role = React.createRef();
+        this.first_name = React.createRef();
+        this.last_name = React.createRef();
+        this.addUser = this.addUser.bind(this);
     }
+
+    addUser() {
+        this.props.addUser({
+            password:   this.password.current.value,
+            username:   this.username.current.value,
+            role:       this.role.current.value,
+            first_name: this.first_name.current.value,
+            last_name:  this.last_name.current.value
+        });
+    }
+
 
     logout () {
         localStorage.removeItem('token');
@@ -42,7 +68,7 @@ class HomeComponent extends Component {
                 <div className="user-section">
                     <table className="table">
                         <tr>
-                            <th colSpan="6" className="header">USUARIOS</th>
+                            <th colSpan="7" className="header">USUARIOS</th>
                         </tr>
                         <tr>
                             <th>Puntos</th>
@@ -51,6 +77,7 @@ class HomeComponent extends Component {
                             <th>Nombre</th>
                             <th>Apellido</th>
                             <th>ID en MongoDB</th>
+                            <th>Eliminar</th>
                         </tr>
                         {this.props.users.map(el => (
                         <tr>
@@ -60,8 +87,18 @@ class HomeComponent extends Component {
                             <td>{el.first_name}</td>
                             <td>{el.last_name}</td>
                             <td>{el.id}</td>
+                            <td><button className="eliminar">Eliminar</button></td>
                         </tr>
                         ))}
+                        <tr className="agregar-tr">
+                            <td><input type="password" ref={this.password} placeholder="Password" /></td>
+                            <td><input type="text" ref={this.username} /></td>
+                            <td><input type="text" ref={this.role} /></td>
+                            <td><input type="text" ref={this.first_name} /></td>
+                            <td><input type="text" ref={this.last_name} /></td>
+                            <td></td>
+                            <td><button className="agregar" onClick={this.addUser}>Agregar</button></td>
+                        </tr>
                     </table>
                     <br />
                     <hr />
@@ -99,6 +136,6 @@ class HomeComponent extends Component {
     }
 }
 
-const Home = connect(mapStateToProps)(HomeComponent);
+const Home = connect(mapStateToProps, mapDispatchToProps)(HomeComponent);
 
 export default Home;
